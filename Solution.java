@@ -488,22 +488,24 @@ class Solution {
 
     // - 1 <= prices.length <= 105
     // - 0 <= prices[i] <= 104
-    public int trap(int[] height) {
-        int[] leftMax = new int[height.length];
-        int max = Integer.MIN_VALUE;
-        for (int i = 0; i < height.length; i++) {
-            max = Math.max(max, height[i]);
-            leftMax[i] = max;
+    public int maxProfit(int[] prices) {
+        if (prices.length <= 1) {
+            return 0;
+        }
+        int buy = 0, sell = 1;
+        int maxProfit = Integer.MIN_VALUE;
+        while (buy < prices.length && sell < prices.length) {
+            int profit = prices[sell] - prices[buy];
+            if (profit < 0) {
+                buy = sell;
+                sell = buy + 1;
+            } else {
+                maxProfit = Math.max(profit, maxProfit);
+                sell++;
+            }
         }
 
-        max = Integer.MIN_VALUE;
-        int sum = 0;
-        for (int i = height.length - 1; i >= 0; i--) {
-            max = Math.max(max, height[i]);
-            sum += Math.abs(Math.min(leftMax[i], max) - height[i]);
-        }
-
-        return sum;
+        return maxProfit != Integer.MIN_VALUE ? maxProfit : 0;
     }
 
     // Given a string s, find the length of the longest 
@@ -621,7 +623,7 @@ class Solution {
             register[s1.charAt(i) - 'a']++;
         }
 
-        int left = 0, right = left + s1.length() - 1;
+        int left = 0, right = s1.length() - 1;
         int[] checker = new int[26];
         for (int i = left; i <= right; i++) {
             checker[s2.charAt(i) - 'a']++;
@@ -639,5 +641,89 @@ class Solution {
         }
 
         return false;
+    }
+
+    // Given two strings s and t of lengths m and n respectively, 
+    // return the minimum window substring of s such that every 
+    // character in t (including duplicates) is included in the window. 
+    // If there is no such substring, return the empty string "".
+
+    // The testcases will be generated such that the answer is unique.
+
+    // Example 1:
+    // Input: s = "ADOBECODEBANC", t = "ABC"
+    // Output: "BANC"
+    // Explanation: The minimum window substring "BANC" 
+    // includes 'A', 'B', and 'C' from string t.
+
+    // Example 2:
+    // Input: s = "a", t = "a"
+    // Output: "a"
+    // Explanation: The entire string s is the minimum window.
+
+    // Example 3:
+    // Input: s = "a", t = "aa"
+    // Output: ""
+    // Explanation: Both 'a's from t must be included in the window.
+    // Since the largest window of s only has one 'a', return empty string.
+    
+    // Constraints:
+    // - m == s.length
+    // - n == t.length
+    // - 1 <= m, n <= 105
+    // - s and t consist of uppercase and lowercase English letters.
+    public String minWindow(String s, String t) {
+        if (s.length() < t.length()) {
+            return "";
+        }
+        
+        // Frequency array for target string t (128 for all ASCII chars)
+        int[] tFreq = new int[128];
+        int required = 0; // Count of characters we need to match
+        
+        for (char c : t.toCharArray()) {
+            if (tFreq[c] == 0) {
+                required++;
+            }
+            tFreq[c]++;
+        }
+        
+        int[] windowFreq = new int[128];
+        int formed = 0; // Count of characters currently matched
+        int left = 0;
+        int minLen = Integer.MAX_VALUE;
+        int leftStart = 0;
+        
+        for (int right = 0; right < s.length(); right++) {
+            char c = s.charAt(right);
+            windowFreq[c]++;
+            
+            // If we just satisfied the requirement for this character
+            if (tFreq[c] > 0 && windowFreq[c] == tFreq[c]) {
+                formed++;
+            }
+
+            // Try to shrink window while valid
+            while (formed == required) {
+                // Update result if current window is smaller
+                if (right - left + 1 < minLen) {
+                    minLen = right - left + 1;
+                    leftStart = left;
+                }
+
+                // Shrink from left
+                char leftChar = s.charAt(left);
+                windowFreq[leftChar]--;
+
+                // If removing this character breaks the requirement
+                if (tFreq[leftChar] > 0 && windowFreq[leftChar] < tFreq[leftChar]) {
+                    formed--;
+                }
+
+                left++;
+            }
+        }
+
+        return minLen == Integer.MAX_VALUE ? "" : s.substring(leftStart, leftStart + minLen);
     }
 }
