@@ -94,6 +94,41 @@ class Solution {
         return result;
     }
 
+    public int[] topKFrequentBucketSort(int[] nums, int k) {
+        // Step 1: Count frequencies
+        Map<Integer, Integer> freqMap = new HashMap<>();
+        for (int num : nums) {
+            freqMap.put(num, freqMap.getOrDefault(num, 0) + 1);
+        }
+        
+        // Step 2: Create buckets - bucket[i] contains elements with frequency i
+        // Maximum frequency is nums.length
+        List<Integer>[] bucket = new List[nums.length + 1];
+        for (int i = 0; i < bucket.length; i++) {
+            bucket[i] = new ArrayList<>();
+        }
+        
+        for (int num : freqMap.keySet()) {
+            int freq = freqMap.get(num);
+            bucket[freq].add(num);
+        }
+        
+        // Step 3: Collect k most frequent elements from highest frequency
+        int[] result = new int[k];
+        int index = 0;
+        
+        for (int i = bucket.length - 1; i >= 0 && index < k; i--) {
+            for (int num : bucket[i]) {
+                result[index++] = num;
+                if (index == k) {
+                    return result;
+                }
+            }
+        }
+        
+        return result;
+    }
+
     // Given an integer array nums, return an array answer such that 
     // answer[i] is equal to the product of all the elements of nums except nums[i].
     // The product of any prefix or suffix of nums is guaranteed to fit in a 32-bit integer.
@@ -268,54 +303,38 @@ class Solution {
     // - 0 <= nums.length <= 105
     // - -109 <= nums[i] <= 109
     public int longestConsecutive(int[] nums) {
-        // if (nums.length == 0) {
-        //     return 0;
-        // }
-        // Arrays.sort(nums);
-        // int i = 1;
-        // int maxSubSeq = Integer.MIN_VALUE;
-        // while (i < nums.length) {
-        //     int count = 1;
-        //     if (nums[i] - nums[i - 1] <= 1) {
-        //         while (i < nums.length && nums[i] - nums[i - 1] <= 1) {
-        //             if (nums[i] - nums[i - 1] == 1) {
-        //                 count++;
-        //                 maxSubSeq = Math.max(maxSubSeq, count);
-        //             }
-        //             i++;
-        //         }
-        //     } else {
-        //         i++;
-        //     }
-        // }
-
-        // return maxSubSeq == Integer.MIN_VALUE ? 1 : maxSubSeq;
-
         if (nums.length == 0) {
             return 0;
         }
-        Set<Integer> data = new HashSet<>();
-        for (int n : nums) {
-            data.add(n);
+        
+        // Build HashSet for O(1) lookup
+        Set<Integer> numSet = new HashSet<>();
+        for (int num : nums) {
+            numSet.add(num);
         }
-
-        int maxSubSeq = Integer.MIN_VALUE;
-        for (int i = 0; i < nums.length; i++) {
-            int prev = nums[i] - 1;
-            int next = nums[i] + 1;
-            if (data.contains(prev) && data.contains(next)) {
-                continue;
-            }
-            int count = 1;
-            while (data.contains(next)) {
-                data.remove(next);
-                next++;
-                count++;
-                maxSubSeq = maxSubSeq < count ? count : maxSubSeq;
+        
+        int maxLength = 0;
+        
+        // Iterate through the set (not the array) to avoid duplicates
+        for (int num : numSet) {
+            // Only start counting if this is the beginning of a sequence
+            // Key optimization: skip if num-1 exists (not the start)
+            if (!numSet.contains(num - 1)) {
+                int currentNum = num;
+                int currentLength = 1;
+                
+                // Count forward from the start
+                while (numSet.contains(currentNum + 1)) {
+                    currentNum++;
+                    currentLength++;
+                }
+                
+                // Update max after counting the full sequence
+                maxLength = Math.max(maxLength, currentLength);
             }
         }
-
-        return maxSubSeq == Integer.MIN_VALUE ? 1 : maxSubSeq;
+        
+        return maxLength;
     }
 
     // Given an integer array nums, return all the triplets 
@@ -351,26 +370,51 @@ class Solution {
     public List<List<Integer>> threeSum(int[] nums) {
         Arrays.sort(nums);
         List<List<Integer>> result = new ArrayList<>();
+        int n = nums.length;
         
-        for (int i = 0; i < nums.length - 2; i++) {
+        for (int i = 0; i < n - 2; i++) {
+            // Skip duplicates for first element
             if (i > 0 && nums[i] == nums[i - 1]) {
                 continue;
             }
-            int left = i + 1, right = nums.length - 1;
+            
+            // Early termination: if smallest number is positive, no solution
+            if (nums[i] > 0) {
+                break;
+            }
+            
+            // Optimization: if smallest possible sum is too large, break
+            if (nums[i] + nums[i + 1] + nums[i + 2] > 0) {
+                break;
+            }
+            
+            // Optimization: if largest possible sum is too small, skip this i
+            if (nums[i] + nums[n - 2] + nums[n - 1] < 0) {
+                continue;
+            }
+            
+            int left = i + 1;
+            int right = n - 1;
+            int target = -nums[i]; // We want left + right = target
+            
             while (left < right) {
-                int l = nums[left], r = nums[right], n = nums[i];
-                int sum = l + r + n;
-                if (sum == 0) {
-                    result.add(Arrays.asList(l, r, n));
+                int sum = nums[left] + nums[right];
+                
+                if (sum == target) {
+                    result.add(Arrays.asList(nums[i], nums[left], nums[right]));
+                    
+                    // Skip duplicates for left pointer
                     while (left < right && nums[left] == nums[left + 1]) {
                         left++;
                     }
+                    // Skip duplicates for right pointer
                     while (left < right && nums[right] == nums[right - 1]) {
                         right--;
                     }
+                    
                     left++;
                     right--;
-                } else if (sum < 0) {
+                } else if (sum < target) {
                     left++;
                 } else {
                     right--;
@@ -725,5 +769,419 @@ class Solution {
         }
 
         return minLen == Integer.MAX_VALUE ? "" : s.substring(leftStart, leftStart + minLen);
+    }
+
+    // You are given an array of integers nums, there is a sliding 
+    // window of size k which is moving from the very left of the 
+    // array to the very right. You can only see the k numbers in 
+    // the window. Each time the sliding window moves right by one position.
+
+    // Return the max sliding window.
+
+    // Example 1:
+    // Input: nums = [1,3,-1,-3,5,3,6,7], k = 3
+    // Output: [3,3,5,5,6,7]
+    // Explanation: 
+    // Window position                Max
+    // ---------------               -----
+    // [1  3 -1] -3   5  3  6  7       3
+    // 1  [3  -1 -3]  5  3  6  7       3
+    // 1  3 [-1  -3   5] 3  6  7       5
+    // 1  3  -1 [-3   5  3] 6  7       5
+    // 1  3  -1  -3  [5  3  6] 7       6
+    // 1  3  -1  -3   5 [3  6  7]      7
+
+    // Example 2:
+    // Input: nums = [1], k = 1
+    // Output: [1]
+    
+    // Constraints:
+    // - 1 <= nums.length <= 105
+    // - -104 <= nums[i] <= 104
+    // - 1 <= k <= nums.length
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        int n = nums.length;
+        if (k == 1) {
+            return nums;
+        }
+
+        int[] left = new int[n];   // Max from left in each block
+        int[] right = new int[n];  // Max from right in each block
+        
+        // Build left array
+        left[0] = nums[0];
+        for (int i = 1; i < n; i++) {
+            left[i] = (i % k == 0) ? nums[i] : Math.max(left[i - 1], nums[i]);
+        }
+        
+        // Build right array
+        right[n - 1] = nums[n - 1];
+        for (int i = n - 2; i >= 0; i--) {
+            right[i] = ((i + 1) % k == 0) ? nums[i] : Math.max(right[i + 1], nums[i]);
+        }
+        
+        // Generate result
+        int[] result = new int[n - k + 1];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = Math.max(right[i], left[i + k - 1]);
+        }
+        
+        return result;
+    }
+
+    // You are given an array of strings tokens that represents 
+    // an arithmetic expression in a Reverse Polish Notation.
+
+    // Evaluate the expression. Return an integer that 
+    // represents the value of the expression.
+
+    // Note that:
+    // - The valid operators are '+', '-', '*', and '/'.
+    // - Each operand may be an integer or another expression.
+    // - The division between two integers always truncates toward zero.
+    // - There will not be any division by zero.
+    // - The input represents a valid arithmetic expression in a reverse polish notation.
+    // - The answer and all the intermediate calculations can be represented in a 32-bit integer.
+    
+    // Example 1:
+
+    // Input: tokens = ["2","1","+","3","*"]
+    // Output: 9
+    // Explanation: ((2 + 1) * 3) = 9
+
+    // Example 2:
+    // Input: tokens = ["4","13","5","/","+"]
+    // Output: 6
+    // Explanation: (4 + (13 / 5)) = 6
+
+    // Example 3:
+    // Input: tokens = ["10","6","9","3","+","-11","*","/","*","17","+","5","+"]
+    // Output: 22
+    // Explanation: ((10 * (6 / ((9 + 3) * -11))) + 17) + 5
+    // = ((10 * (6 / (12 * -11))) + 17) + 5
+    // = ((10 * (6 / -132)) + 17) + 5
+    // = ((10 * 0) + 17) + 5
+    // = (0 + 17) + 5
+    // = 17 + 5
+    // = 22
+    
+    // Constraints:
+    // - 1 <= tokens.length <= 104
+    // - tokens[i] is either an operator: "+", "-", "*", or "/", or an integer in the range [-200, 200].
+    public int evalRPN(String[] tokens) {
+        Stack<Integer> stack = new Stack<>();
+        
+        for (String token : tokens) {
+            switch (token) {
+                case "+":
+                    stack.push(stack.pop() + stack.pop());
+                    break;
+                case "-":
+                    int b = stack.pop();
+                    int a = stack.pop();
+                    stack.push(a - b);
+                    break;
+                case "*":
+                    stack.push(stack.pop() * stack.pop());
+                    break;
+                case "/":
+                    int divisor = stack.pop();
+                    int dividend = stack.pop();
+                    stack.push(dividend / divisor);
+                    break;
+                default:
+                    stack.push(Integer.parseInt(token));
+            }
+        }
+        
+        return stack.pop();
+    }
+
+    // Given n pairs of parentheses, write a function to 
+    // generate all combinations of well-formed parentheses.
+
+    // Example 1:
+    // Input: n = 3
+    // Output: ["((()))","(()())","(())()","()(())","()()()"]
+
+    // Example 2:
+    // Input: n = 1
+    // Output: ["()"]
+    public List<String> generateParenthesis(int n) {
+        char[] result = new char[n * 2];
+        int leftRem = n, rightRem = n;
+        List<String> parens = new ArrayList<>();
+        generateParenthesisHelper(leftRem, rightRem, 0, result, parens);
+        return parens;
+    }
+
+    private void generateParenthesisHelper(int leftRem, 
+                                           int rightRem, 
+                                           int index,
+                                           char[] result, 
+                                           List<String> parens) {
+        if (leftRem < 0 || rightRem < leftRem) {
+            return;
+        }
+        if (leftRem == 0 && rightRem == 0) {
+            parens.add(new String(result));
+        }
+        if (leftRem > 0) {
+            result[index] = '(';
+            generateParenthesisHelper(leftRem - 1, rightRem, index + 1, result, parens);
+        }
+        if (rightRem > 0) {
+            result[index] = ')';
+            generateParenthesisHelper(leftRem, rightRem - 1, index + 1, result, parens);
+        }
+    }
+
+    // Given an array of integers temperatures represents the 
+    // daily temperatures, return an array answer such that 
+    // answer[i] is the number of days you have to wait after 
+    // the ith day to get a warmer temperature. If there is 
+    // no future day for which this is possible, keep answer[i] == 0 instead.
+
+    // Example 1:
+    // Input: temperatures = [73,74,75,71,69,72,76,73]
+    // Output: [1,1,4,2,1,1,0,0]
+
+    // Example 2:
+    // Input: temperatures = [30,40,50,60]
+    // Output: [1,1,1,0]
+
+    // Example 3:
+    // Input: temperatures = [30,60,90]
+    // Output: [1,1,0]
+    
+    // Constraints:
+    // - 1 <= temperatures.length <= 105
+    // - 30 <= temperatures[i] <= 100
+    public int[] dailyTemperatures(int[] temperatures) {
+        int n = temperatures.length;
+        int[] answer = new int[n];
+        int[] stack = new int[n]; // index stack
+        int top = -1; // stack pointer
+        
+        for (int i = 0; i < n; i++) {
+            while (top >= 0 && temperatures[i] > temperatures[stack[top]]) {
+                int prevIndex = stack[top--];
+                answer[prevIndex] = i - prevIndex;
+            }
+            stack[++top] = i;
+        }
+        
+        return answer;
+    }
+
+    // There are n cars at given miles away from the starting 
+    // mile 0, traveling to reach the mile target.
+    // You are given two integer arrays position and speed, 
+    // both of length n, where position[i] is the starting 
+    // mile of the ith car and speed[i] is the speed of the ith car in miles per hour.
+
+    // A car cannot pass another car, but it can catch up and 
+    // then travel next to it at the speed of the slower car.
+
+    // A car fleet is a single car or a group of cars driving 
+    // next to each other. The speed of the car fleet is the 
+    // minimum speed of any car in the fleet.
+
+    // If a car catches up to a car fleet at the mile target, 
+    // it will still be considered as part of the car fleet.
+
+    // Return the number of car fleets that will arrive at the destination.
+
+    // Example 1:
+    // Input: target = 12, position = [10,8,0,5,3], speed = [2,4,1,1,3]
+
+    // Output: 3
+
+    // Explanation:
+    // The cars starting at 10 (speed 2) and 8 (speed 4) become a 
+    // fleet, meeting each other at 12. The fleet forms at target.
+    // The car starting at 0 (speed 1) does not catch up to any 
+    // other car, so it is a fleet by itself.
+    // The cars starting at 5 (speed 1) and 3 (speed 3) become a fleet, 
+    // meeting each other at 6. The fleet moves at speed 1 until it reaches target.
+
+    // Example 2:
+    // Input: target = 10, position = [3], speed = [3]
+
+    // Output: 1
+
+    // Explanation:
+    // There is only one car, hence there is only one fleet.
+
+    // Example 3:
+
+    // Input: target = 100, position = [0,2,4], speed = [4,2,1]
+
+    // Output: 1
+
+    // Explanation:
+    // The cars starting at 0 (speed 4) and 2 (speed 2) become a fleet, 
+    // meeting each other at 4. The car starting at 4 (speed 1) travels to 5.
+    // Then, the fleet at 4 (speed 2) and the car at position 5 (speed 1) 
+    // become one fleet, meeting each other at 6. The fleet moves at 
+    // speed 1 until it reaches target.
+    
+
+    // Constraints:
+    // - n == position.length == speed.length
+    // - 1 <= n <= 105
+    // - 0 < target <= 106
+    // - 0 <= position[i] < target
+    // - All the values of position are unique.
+    // - 0 < speed[i] <= 106
+    public int carFleet(int target, int[] position, int[] speed) {
+        int n = position.length;
+        if (n == 1) return 1;
+        
+        // Create array of cars with [position, time to target]
+        double[][] cars = new double[n][2];
+        for (int i = 0; i < n; i++) {
+            cars[i][0] = position[i];
+            cars[i][1] = (double)(target - position[i]) / speed[i];
+        }
+        
+        // Sort by position in descending order (closest to target first)
+        Arrays.sort(cars, (a, b) -> Double.compare(b[0], a[0]));
+        
+        int fleets = 0;
+        double maxTime = 0;
+        
+        // Process cars from closest to target
+        for (int i = 0; i < n; i++) {
+            double timeToTarget = cars[i][1];
+            
+            // If this car takes longer than previous, it's a new fleet
+            if (timeToTarget > maxTime) {
+                fleets++;
+                maxTime = timeToTarget;
+            }
+            // Otherwise, it catches up to the fleet ahead
+        }
+        
+        return fleets;
+    }
+
+    // Given an array of integers heights representing the histograms 
+    // bar height where the width of each bar is 1, return the area 
+    // of the largest rectangle in the histogram.
+
+    // Example 1:
+    // Input: heights = [2,1,5,6,2,3]
+    // Output: 10
+    // Explanation: The above is a histogram where width of each bar is 1.
+    // The largest rectangle is shown in the red area, which has an area = 10 units.
+
+    // Example 2:
+    // Input: heights = [2,4]
+    // Output: 4
+    
+    // Constraints:
+    // - 1 <= heights.length <= 105
+    // - 0 <= heights[i] <= 104
+    public int largestRectangleArea(int[] heights) {
+        int n = heights.length;
+        int[] stack = new int[n + 1];
+        int top = -1;
+        int maxArea = 0;
+        
+        for (int i = 0; i < n; i++) {
+            while (top >= 0 && heights[i] < heights[stack[top]]) {
+                int height = heights[stack[top--]];
+                int width = top < 0 ? i : i - stack[top] - 1;
+                maxArea = Math.max(maxArea, height * width);
+            }
+            stack[++top] = i;
+        }
+        
+        while (top >= 0) {
+            int height = heights[stack[top--]];
+            int width = top < 0 ? n : n - stack[top] - 1;
+            maxArea = Math.max(maxArea, height * width);
+        }
+        
+        return maxArea;
+    }
+
+    // Koko loves to eat bananas. There are n piles of bananas, 
+    // the ith pile has piles[i] bananas. The guards have gone 
+    // and will come back in h hours.
+
+    // Koko can decide her bananas-per-hour eating speed of k. 
+    // Each hour, she chooses some pile of bananas and eats k 
+    // bananas from that pile. If the pile has less than k bananas, 
+    // she eats all of them instead and will not eat any more 
+    // bananas during this hour.
+
+    // Koko likes to eat slowly but still wants to finish eating 
+    // all the bananas before the guards return.
+
+    // Return the minimum integer k such that she can eat all 
+    // the bananas within h hours.
+
+    // Example 1:
+    // Input: piles = [3,6,7,11], h = 8
+    // Output: 4
+
+    // Example 2:
+    // Input: piles = [30,11,23,4,20], h = 5
+    // Output: 30
+
+    // Example 3:
+    // Input: piles = [30,11,23,4,20], h = 6
+    // Output: 23
+    
+    // Constraints:
+    // - 1 <= piles.length <= 104
+    // - piles.length <= h <= 109
+    // - 1 <= piles[i] <= 109
+    public int minEatingSpeed(int[] piles, int h) {
+        // Binary search bounds
+        int left = 1;
+        int right = getMax(piles);
+        
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            
+            // Check if we can finish with speed mid
+            if (canFinish(piles, h, mid)) {
+                // Try smaller speed
+                right = mid;
+            } else {
+                // Need faster speed
+                left = mid + 1;
+            }
+        }
+        
+        return left;
+    }
+    
+    // Check if Koko can finish all bananas at speed k within h hours
+    private boolean canFinish(int[] piles, int h, int k) {
+        long hoursNeeded = 0;
+        
+        for (int pile : piles) {
+            // Ceiling division: (pile + k - 1) / k
+            hoursNeeded += (pile + k - 1) / k;
+            
+            // Early termination if already exceeded
+            if (hoursNeeded > h) {
+                return false;
+            }
+        }
+        
+        return hoursNeeded <= h;
+    }
+    
+    private int getMax(int[] piles) {
+        int max = piles[0];
+        for (int pile : piles) {
+            max = Math.max(max, pile);
+        }
+        return max;
     }
 }
