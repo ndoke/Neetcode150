@@ -631,7 +631,7 @@ class Solution {
                 ++occurence[s.charAt(right) - 'A']);
             int windowSize = right - left + 1;
             if (windowSize - maxOccurence > k) {
-                occurence[s.charAt(left) - 'A']--;                
+                occurence[s.charAt(left) - 'A']--;
                 left++;
             }
             result = Math.max(result, right - left + 1);
@@ -1183,5 +1183,410 @@ class Solution {
             max = Math.max(max, pile);
         }
         return max;
+    }
+
+    // A permutation of an array of integers is an arrangement of 
+    // its members into a sequence or linear order.
+
+    // For example, for arr = [1,2,3], the following are all the 
+    // permutations of arr: [1,2,3], [1,3,2], [2, 1, 3], [2, 3, 1], 
+    // [3,1,2], [3,2,1].
+    // The next permutation of an array of integers is the next 
+    // lexicographically greater permutation of its integer. 
+    // More formally, if all the permutations of the array are 
+    // sorted in one container according to their lexicographical 
+    // order, then the next permutation of that array is the 
+    // permutation that follows it in the sorted container. 
+    // If such arrangement is not possible, the array must be 
+    // rearranged as the lowest possible order (i.e., sorted in ascending order).
+
+    // For example, the next permutation of arr = [1,2,3] is [1,3,2].
+    // Similarly, the next permutation of arr = [2,3,1] is [3,1,2].
+    // While the next permutation of arr = [3,2,1] is [1,2,3] because 
+    // [3,2,1] does not have a lexicographical larger rearrangement.
+    // Given an array of integers nums, find the next permutation of nums.
+
+    // The replacement must be in place and use only constant extra memory.
+
+    // Example 1:
+    // Input: nums = [1,2,3]
+    // Output: [1,3,2]
+
+    // Example 2:
+    // Input: nums = [3,2,1]
+    // Output: [1,2,3]
+
+    // Example 3:
+    // Input: nums = [1,1,5]
+    // Output: [1,5,1]
+    
+    // Constraints:
+    // - 1 <= nums.length <= 100
+    // - 0 <= nums[i] <= 100
+    public void nextPermutation(int[] nums) {
+        int n = nums.length;
+        
+        // Step 1: Find the pivot (rightmost i where nums[i] < nums[i+1])
+        int i = n - 2;
+        while (i >= 0 && nums[i] >= nums[i + 1]) {
+            i--;
+        }
+        
+        // Step 2: If pivot found, find successor and swap
+        if (i >= 0) {
+            // Find the smallest element greater than nums[i] from the right
+            int j = n - 1;
+            while (j >= 0 && nums[j] <= nums[i]) {
+                j--;
+            }
+            // Swap pivot with its successor
+            swap(nums, i, j);
+        }
+        
+        // Step 3: Reverse the suffix after position i
+        reverse(nums, i + 1, n - 1);
+    }
+    
+    private void swap(int[] nums, int i, int j) {
+        int temp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = temp;
+    }
+    
+    private void reverse(int[] nums, int left, int right) {
+        while (left < right) {
+            swap(nums, left, right);
+            left++;
+            right--;
+        }
+    }
+
+    // Suppose an array of length n sorted in ascending order 
+    // is rotated between 1 and n times. For example, the 
+    // array nums = [0,1,2,4,5,6,7] might become:
+
+    // [4,5,6,7,0,1,2] if it was rotated 4 times.
+    // [0,1,2,4,5,6,7] if it was rotated 7 times.
+    // Notice that rotating an array [a[0], a[1], a[2], ..., a[n-1]] 1 
+    // time results in the array [a[n-1], a[0], a[1], a[2], ..., a[n-2]].
+
+    // Given the sorted rotated array nums of unique elements, 
+    // return the minimum element of this array.
+
+    // You must write an algorithm that runs in O(log n) time.
+
+    // Example 1:
+    // Input: nums = [3,4,5,1,2]
+    // Output: 1
+    // Explanation: The original array was [1,2,3,4,5] rotated 3 times.
+
+    // Example 2:
+    // Input: nums = [4,5,6,7,0,1,2]
+    // Output: 0
+    // Explanation: The original array was [0,1,2,4,5,6,7] and it was rotated 4 times.
+
+    // Example 3:
+    // Input: nums = [11,13,15,17]
+    // Output: 11
+    // Explanation: The original array was [11,13,15,17] and it was rotated 4 times. 
+    
+    // Constraints:
+    // - n == nums.length
+    // - 1 <= n <= 5000
+    // - -5000 <= nums[i] <= 5000
+    // - All the integers of nums are unique.
+    // - nums is sorted and rotated between 1 and n times.
+    public int findMin(int[] nums) {
+        int left = 0, right = nums.length - 1;
+        
+        while (left < right) {
+            int mid = (right + left) / 2;
+            
+            // If mid element is greater than the rightmost element,
+            // the minimum is in the right half
+            if (nums[mid] > nums[right]) {
+                left = mid + 1;
+            } else {
+                // Otherwise, the minimum is in the left half (including mid)
+                right = mid;
+            }
+        }
+        
+        return nums[left];
+    }
+
+    // There is an integer array nums sorted in ascending order 
+    // (with distinct values).
+
+    // Prior to being passed to your function, nums is possibly 
+    // left rotated at an unknown index k (1 <= k < nums.length) 
+    // such that the resulting array is [nums[k], nums[k+1], ..., 
+    // nums[n-1], nums[0], nums[1], ..., nums[k-1]] (0-indexed). 
+    // For example, [0,1,2,4,5,6,7] might be left rotated by 3 
+    // indices and become [4,5,6,7,0,1,2].
+
+    // Given the array nums after the possible rotation and an 
+    // integer target, return the index of target if it is in nums, 
+    // or -1 if it is not in nums.
+
+    // You must write an algorithm with O(log n) runtime complexity.
+
+    // Example 1:
+    // Input: nums = [4,5,6,7,0,1,2], target = 0
+    // Output: 4
+
+    // Example 2:
+    // Input: nums = [4,5,6,7,0,1,2], target = 3
+    // Output: -1
+
+    // Example 3:
+    // Input: nums = [1], target = 0
+    // Output: -1
+    
+    // Constraints:
+
+    // - 1 <= nums.length <= 5000
+    // - -104 <= nums[i] <= 104
+    // - All values of nums are unique.
+    // - nums is an ascending array that is possibly rotated.
+    // - -104 <= target <= 104
+    public int search(int[] nums, int target) {
+        int left = 0;
+        int right = nums.length - 1;
+        
+        while (left <= right) {
+            int mid = (right + left) / 2;
+            
+            // Found target
+            if (nums[mid] == target) {
+                return mid;
+            }
+            
+            // Determine which half is sorted
+            if (nums[left] <= nums[mid]) {
+                // Left half is sorted
+                if (nums[left] <= target && target < nums[mid]) {
+                    // Target is in the sorted left half
+                    right = mid - 1;
+                } else {
+                    // Target is in the right half
+                    left = mid + 1;
+                }
+            } else {
+                // Right half is sorted
+                if (nums[mid] < target && target <= nums[right]) {
+                    // Target is in the sorted right half
+                    left = mid + 1;
+                } else {
+                    // Target is in the left half
+                    right = mid - 1;
+                }
+            }
+        }
+        
+        // Target not found
+        return -1;
+    }
+
+    // Design a time-based key-value data structure that can store 
+    // multiple values for the same key at different time stamps 
+    // and retrieve the keys value at a certain timestamp.
+
+    // Implement the TimeMap class:
+
+    // TimeMap() Initializes the object of the data structure.
+    // void set(String key, String value, int timestamp) Stores 
+    // the key key with the value value at the given time timestamp.
+    // String get(String key, int timestamp) Returns a value such 
+    // that set was called previously, with timestamp_prev <= timestamp. 
+    // If there are multiple such values, it returns the value 
+    // associated with the largest timestamp_prev. If there are 
+    // no values, it returns "".
+
+    // Example 1:
+    // Input
+    // ["TimeMap", "set", "get", "get", "set", "get", "get"]
+    // [[], ["foo", "bar", 1], ["foo", 1], ["foo", 3], ["foo", "bar2", 4], ["foo", 4], ["foo", 5]]
+    // Output
+    // [null, null, "bar", "bar", null, "bar2", "bar2"]
+
+    // Explanation
+    // TimeMap timeMap = new TimeMap();
+    // timeMap.set("foo", "bar", 1);  // store the key "foo" and value "bar" along with timestamp = 1.
+    // timeMap.get("foo", 1);         // return "bar"
+    // timeMap.get("foo", 3);         // return "bar", since there is no value corresponding to foo at timestamp 3 and timestamp 2, then the only value is at timestamp 1 is "bar".
+    // timeMap.set("foo", "bar2", 4); // store the key "foo" and value "bar2" along with timestamp = 4.
+    // timeMap.get("foo", 4);         // return "bar2"
+    // timeMap.get("foo", 5);         // return "bar2"
+    
+    // Constraints:
+    // - 1 <= key.length, value.length <= 100
+    // - key and value consist of lowercase English letters and digits.
+    // - 1 <= timestamp <= 107
+    // - All the timestamps timestamp of set are strictly increasing.
+    // - At most 2 * 105 calls will be made to set and get.
+    class TimeMap {
+        private static class TimeList {
+            List<Integer> times = new ArrayList<>();
+            List<String> values = new ArrayList<>();
+        }
+
+        private Map<String, TimeList> map = new HashMap<>();
+
+        public void set(String key, String value, int timestamp) {
+            TimeList tl = map.computeIfAbsent(key, k -> new TimeList());
+            tl.times.add(timestamp);
+            tl.values.add(value);
+        }
+
+        public String get(String key, int timestamp) {
+            TimeList tl = map.get(key);
+            if (tl == null) return "";
+
+            List<Integer> times = tl.times;
+            int idx = Collections.binarySearch(times, timestamp);
+
+            if (idx >= 0) {
+                return tl.values.get(idx);
+            } else {
+                int insertPoint = -idx - 1;
+                if (insertPoint == 0) return "";
+                return tl.values.get(insertPoint - 1);
+            }
+        }
+    }
+
+    // Given two sorted arrays nums1 and nums2 of size m 
+    // and n respectively, return the median of the two sorted arrays.
+
+    // The overall run time complexity should be O(log (m+n)).
+
+    // Example 1:
+    // Input: nums1 = [1,3], nums2 = [2]
+    // Output: 2.00000
+    // Explanation: merged array = [1,2,3] and median is 2.
+
+    // Example 2:
+    // Input: nums1 = [1,2], nums2 = [3,4]
+    // Output: 2.50000
+    // Explanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5.
+    
+    // Constraints:
+    // - nums1.length == m
+    // - nums2.length == n
+    // - 0 <= m <= 1000
+    // - 0 <= n <= 1000
+    // - 1 <= m + n <= 2000
+    // - -106 <= nums1[i], nums2[i] <= 106
+    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+        int total = nums1.length + nums2.length;
+        if (total % 2 == 1) {
+            return findKth(nums1, 0, nums2, 0, total / 2 + 1);
+        } else {
+            int mid1 = findKth(nums1, 0, nums2, 0, total / 2);
+            int mid2 = findKth(nums1, 0, nums2, 0, total / 2 + 1);
+            return (mid1 + mid2) / 2.0;
+        }
+    }
+    
+    // Find the k-th smallest element (k is 1-indexed)
+    private int findKth(int[] nums1, int start1, int[] nums2, int start2, int k) {
+        while (true) {
+            // If nums1 is exhausted, return k-th element from nums2
+            if (start1 >= nums1.length) {
+                return nums2[start2 + k - 1];
+            }
+            // If nums2 is exhausted, return k-th element from nums1
+            if (start2 >= nums2.length) {
+                return nums1[start1 + k - 1];
+            }
+            // Base case: if k == 1, return the smaller of the two current elements
+            if (k == 1) {
+                return Math.min(nums1[start1], nums2[start2]);
+            }
+            
+            // Compare the k/2-th elements from both arrays
+            int half = k / 2;
+            int mid1 = start1 + half - 1 < nums1.length ? nums1[start1 + half - 1] : Integer.MAX_VALUE;
+            int mid2 = start2 + half - 1 < nums2.length ? nums2[start2 + half - 1] : Integer.MAX_VALUE;
+            
+            // Eliminate the smaller half
+            if (mid1 < mid2) {
+                start1 += half;
+                k -= half;
+            } else {
+                start2 += half;
+                k -= half;
+            }
+        }
+    }
+
+    // Given an array of integers nums sorted in non-decreasing 
+    // order, find the starting and ending position of a given 
+    // target value.
+
+    // If target is not found in the array, return [-1, -1].
+
+    // You must write an algorithm with O(log n) runtime complexity.
+
+    // Example 1:
+    // Input: nums = [5,7,7,8,8,10], target = 8
+    // Output: [3,4]
+
+    // Example 2:
+    // Input: nums = [5,7,7,8,8,10], target = 6
+    // Output: [-1,-1]
+
+    // Example 3:
+    // Input: nums = [], target = 0
+    // Output: [-1,-1]
+    
+    // Constraints:
+    // - 0 <= nums.length <= 105
+    // - -109 <= nums[i] <= 109
+    // - nums is a non-decreasing array.
+    // - -109 <= target <= 109
+    public int[] searchRange(int[] nums, int target) {
+        int[] result = {-1, -1};
+        
+        // Find the leftmost (starting) position
+        result[0] = findBound(nums, target, true);
+        
+        // If target not found, no need to search for right bound
+        if (result[0] == -1) {
+            return result;
+        }
+        
+        // Find the rightmost (ending) position
+        result[1] = findBound(nums, target, false);
+        
+        return result;
+    }
+    
+    private int findBound(int[] nums, int target, boolean isLeft) {
+        int left = 0;
+        int right = nums.length - 1;
+        int bound = -1;
+        
+        while (left <= right) {
+            int mid = (right + left) / 2;
+            
+            if (nums[mid] == target) {
+                bound = mid;
+                // If looking for left bound, continue searching left
+                // If looking for right bound, continue searching right
+                if (isLeft) {
+                    right = mid - 1;
+                } else {
+                    left = mid + 1;
+                }
+            } else if (nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        
+        return bound;
     }
 }
